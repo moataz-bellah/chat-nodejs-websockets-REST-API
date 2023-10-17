@@ -5,7 +5,7 @@ const chatRoutes = require('./routes/chat');
 const authRoutes = require('./routes/auth');
 const multer = require('multer')
 const path = require('path')
-
+const Messages = require('./models/message'); 
 const MongoURI = 'mongodb+srv://whoami:dG1awObaBeCC87ur@cluster0.dqdhphe.mongodb.net/chat?retryWrites=true&w=majority';
 const mongoose = require('mongoose');
 let SOCKETS_DATA = [];
@@ -63,10 +63,16 @@ then(result => {
 			if(indx!=-1){
 				console.log(indx);
 				console.log(SOCKETS_DATA[indx]);
-				io.to(SOCKETS_DATA[indx].socketId).emit("private message", {
-					message:message,
-					from: from,
-				  });
+				const newMessage = new Messages({sender:from,reciever:to,text:message,channelId:'fsociety'});
+	newMessage.save().then(result=>{
+		io.to(SOCKETS_DATA[indx].socketId).emit("private message", {
+			message:message,
+			from: from,
+		  });
+	}).catch(err=>{
+		console.log(err);
+	});
+				
 			}
 			
 		  });
