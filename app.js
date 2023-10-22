@@ -53,28 +53,32 @@ then(result => {
 		}
 //   socket.emit("users", users);
 		socket.on("private message", ({ message, to,from }) => {
-			// console.log('Client connected !!! ',socket.id );
-			// console.log("MESSAGE  ",message);
-			// console.log("TO  ",to);
-			// console.log('FROM  ',from);
-			// console.log("SOCKET USERID   ",socket.handshake.auth.userId);
-			console.log(SOCKETS_DATA);
-			const indx = SOCKETS_DATA.findIndex(s=>s.userId === to);
+			const date = new Date();
+			const hour = date.getHours();
+			const minutes = date.getMinutes();
+			let night = 'AM';
+			if(hour>12==0){
+				hour = hour - 12;
+				night = 'PM';
+			}
+			const sentAt = hour.toString() + "." + minutes.toString() + ' ' + night;
+			const newMessage = new Messages({sender:from,reciever:to,text:message,channelId:'fsociety',sentAt:sentAt});
+		newMessage.save().then(result=>{
+		console.log(result.createdAt.getHours());
+		console.log(result.createdAt.getMinutes());
+		const indx = SOCKETS_DATA.findIndex(s=>s.userId === to);
+			
 			if(indx!=-1){
 				console.log(indx);
 				console.log(SOCKETS_DATA[indx]);
-				const newMessage = new Messages({sender:from,reciever:to,text:message,channelId:'fsociety'});
-	newMessage.save().then(result=>{
-		io.to(SOCKETS_DATA[indx].socketId).emit("private message", {
-			message:message,
-			from: from,
-		  });
+				io.to(SOCKETS_DATA[indx].socketId).emit("private message", {
+					message:message,
+					from: from,
+				  });		
+			}
 	}).catch(err=>{
 		console.log(err);
-	});
-				
-			}
-			
+	});			
 		  });
 		  socket.on("disconnect",()=>{
 			console.log("SOCKET ID ",socket.id)

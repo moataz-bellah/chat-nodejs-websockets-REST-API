@@ -15,7 +15,7 @@ exports.getMessages = (req,res,next)=>{
 	// 	console.log(err);
 	// });
 	Messages.find({sender:[sender,recieverId],reciever:[sender,recieverId]}).then(result=>{
-	
+		console.log(result[0].createdAt)
 		res.status(200).json({messages:result});
 	}).catch(err=>{
 		console.log(err);
@@ -30,6 +30,7 @@ exports.sendMessage = (req,res,next)=>{
 	const newMessage = new Messages({sender:sender,reciever:reciever,text:message,channelId:'fsociety'});
 	newMessage.save().then(result=>{
 		// io.getIO().emit("send-message",{action:"message sent",message:result});
+		console.log(result.createdAt.getHours())
 		res.status(201).json({statusMessage:'Message sent successfully'})
 	}).catch(err=>{
 		console.log(err);
@@ -39,12 +40,22 @@ exports.sendMessage = (req,res,next)=>{
 
 
 exports.getFriends = (req,res,next)=>{
+	let friends = [];
 	
-	User.findOne({_id:req.userId}).populate('friends').then(data=>{
-				res.status(200).json({friends:data.friends})
+	User.find().then(data=>{
+		friends = data.filter(friend=>friend._id.toString() !== req.userId.toString());
+				console.log(friends)
+				res.status(200).json({friends:friends});
 	}).catch(err=>{
 		console.log(err);
-	})
+	});
+
+	// User.findOne({_id:req.userId}).populate('friends').then(data=>{
+	// 			friends = data.filter(friend=>friend._id !== req.userId);
+	// 			res.status(200).json({friends:data.friends});
+	// }).catch(err=>{
+	// 	console.log(err);
+	// });
 };
 
 
