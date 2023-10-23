@@ -4,18 +4,11 @@ const path = require('path')
 const fs = require('fs')
 // const io = require('../socket');
 const Channel = require('../models/channel');
-
+const Room = require('../models/room');
 exports.getMessages = (req,res,next)=>{
 	const recieverId = req.body.recieverId;
 	const sender = req.userId;
-
-	// Messages.find({channelId:'fsociety'}).then(result=>{
-	// 	res.status(200).json({messages:result});
-	// }).catch(err=>{
-	// 	console.log(err);
-	// });
 	Messages.find({sender:[sender,recieverId],reciever:[sender,recieverId]}).then(result=>{
-		console.log(result[0].createdAt)
 		res.status(200).json({messages:result});
 	}).catch(err=>{
 		console.log(err);
@@ -30,7 +23,6 @@ exports.sendMessage = (req,res,next)=>{
 	const newMessage = new Messages({sender:sender,reciever:reciever,text:message,channelId:'fsociety'});
 	newMessage.save().then(result=>{
 		// io.getIO().emit("send-message",{action:"message sent",message:result});
-		console.log(result.createdAt.getHours())
 		res.status(201).json({statusMessage:'Message sent successfully'})
 	}).catch(err=>{
 		console.log(err);
@@ -44,7 +36,6 @@ exports.getFriends = (req,res,next)=>{
 	
 	User.find().then(data=>{
 		friends = data.filter(friend=>friend._id.toString() !== req.userId.toString());
-				console.log(friends)
 				res.status(200).json({friends:friends});
 	}).catch(err=>{
 		console.log(err);
@@ -58,12 +49,17 @@ exports.getFriends = (req,res,next)=>{
 	// });
 };
 
-
+exports.getRooms = (req,res,next)=>{
+	Room.find().then(rooms=>{
+		res.status(200).json({rooms:rooms});
+	}).catch(err=>{
+		console.log(err);
+	});
+};
 exports.getPeople = (req,res,next) => {
 	User.findById(req.userId).then(user=>{
 		User.find().then(users=>{
 			const people = users.filter(u=> !user.friends.includes(u._id) && u._id != req.userId);
-			console.log("NEW USERES -- ",people);
 			res.status(200).json({people:people});
 		}).catch(err=>{
 			console.log(err);

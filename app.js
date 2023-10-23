@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth');
 const multer = require('multer')
 const path = require('path')
 const Messages = require('./models/message'); 
+const Room = require('./models/room');
 const MongoURI = 'mongodb+srv://whoami:dG1awObaBeCC87ur@cluster0.dqdhphe.mongodb.net/chat?retryWrites=true&w=majority';
 const mongoose = require('mongoose');
 let SOCKETS_DATA = [];
@@ -43,37 +44,37 @@ app.use((error,req,res,next)=>{
 mongoose.connect(MongoURI).
 then(result => {
     console.log('Connected!');
-    const server = app.listen(3000);
+	
+	const server = app.listen(3000);
 	const io = require('./socket').init(server);
     io.on('connection',socket=>{
 		if(socket.handshake.auth.userId){
-			console.log("ID ",socket.id);
-			console.log("USERID ",socket.handshake.auth.userId);
 			SOCKETS_DATA.push({socketId:socket.id,userId:socket.handshake.auth.userId});
 		}
+		socket.on('joinRoom',({roomId,roomName,userId})=>{
+			socket.join(roomId);
+			Room.findById(roomId).then(result=>{
+				result.members.push(userId);
+				return result.save();
+			}).then(res=>{
+				io.to(roomId).emit('userJoined','User has joined the room');
+			}).catch(err=>{
+				console.log(err);
+			});
+			
+
+		});
 //   socket.emit("users", users);
-		socket.on("private message", ({ message, to,from }) => {
-			const date = new Date();
-			const hour = date.getHours();
-			const minutes = date.getMinutes();
-			let night = 'AM';
-			if(hour>12==0){
-				hour = hour - 12;
-				night = 'PM';
-			}
-			const sentAt = hour.toString() + "." + minutes.toString() + ' ' + night;
-			const newMessage = new Messages({sender:from,reciever:to,text:message,channelId:'fsociety',sentAt:sentAt});
+		socket.on("private message", ({ message, to,from,sentAt }) => {
+		const newMessage = new Messages({sender:from,reciever:to,text:message,channelId:'fsociety',sentAt:sentAt});
 		newMessage.save().then(result=>{
-		console.log(result.createdAt.getHours());
-		console.log(result.createdAt.getMinutes());
 		const indx = SOCKETS_DATA.findIndex(s=>s.userId === to);
 			
 			if(indx!=-1){
-				console.log(indx);
-				console.log(SOCKETS_DATA[indx]);
 				io.to(SOCKETS_DATA[indx].socketId).emit("private message", {
-					message:message,
+					message:result.text,
 					from: from,
+					sentAt
 				  });		
 			}
 	}).catch(err=>{
@@ -81,7 +82,6 @@ then(result => {
 	});			
 		  });
 		  socket.on("disconnect",()=>{
-			console.log("SOCKET ID ",socket.id)
 			SOCKETS_DATA = SOCKETS_DATA.filter(s=>s.socketId!==socket.id);
 		  });
 		});

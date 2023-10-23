@@ -16,6 +16,9 @@ const messageSchema = new Schema({
 	},
 	channelId:{
 		type:String,
+	},
+	sentAt:{
+		type:String
 	}
 },{timestamps:true});
 module.exports = mongoose.model("Message",messageSchema);

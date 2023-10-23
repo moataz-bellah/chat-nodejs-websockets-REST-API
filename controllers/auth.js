@@ -1,6 +1,8 @@
 const {validationResult} = require('express-validator');
 const User = require('../models/user')
 const jwt = require('jsonwebtoken')
+const Room = require('../models/room');
+const Message = require('../models/message');
 exports.signup = (req,res,next)=>{
 	const errors = validationResult(req);
 	if(!errors.isEmpty()){
@@ -12,9 +14,6 @@ exports.signup = (req,res,next)=>{
 	const email = req.body.email;
 	const name = req.body.name;
 	const password = req.body.password;
-	console.log('EMAIL-> ',email)
-	console.log('NAME-> ',name)
-	console.log('PASSWORD-> ',password)
 	const user = new User({email:email,name:name,password:password})
 	user.save().then(result=>{
 		res.status(201).json({message:'User created',userId:result._id})	
@@ -36,6 +35,13 @@ exports.login = (req,res,next)=>{
 			}
 			if(user.password === password){
 				const token = jwt.sign({email:user.email,userId:user._id.toString()},'elliotalderson',{expiresIn:'1h'});
+				// const newRoom = new Room({name:'fsociety',password:'admin'});
+				// newRoom.save().then(result=>{
+				// 	console.log(result);
+					
+				// }).catch(err=>{
+				// 	console.log(err);
+				// });
 				res.status(200).json({message:'User logged in successfully',token:token,userId:user._id.toString()});
 			}
 			else{
