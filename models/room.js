@@ -18,9 +18,19 @@ const roomSchema = new Schema({
     ],
     messages:[
         {
-            type:Schema.Types.ObjectId,
-            ref:'Message'
-        }
+            text:{
+                type:String,
+                required:true
+            },
+            sender:{
+                type:Schema.Types.ObjectId,
+                ref:'User'
+            },
+            sentAt:{
+                type:String
+            }
+        },
+        {timestamps:true}
     ]
 },{timestamps:true});
 

@@ -7,4 +7,5 @@ router.post('/send',isAuth,chatController.sendMessage);
 router.post('/messages',isAuth,chatController.getMessages);
 router.get('/people',isAuth,chatController.getPeople);
 router.get('/rooms',isAuth,chatController.getRooms);
+router.post('/room-messages',isAuth,chatController.getRoomMessages);
 module.exports = router;

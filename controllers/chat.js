@@ -15,21 +15,25 @@ exports.getMessages = (req,res,next)=>{
 	})
 };
 
-exports.sendMessage = (req,res,next)=>{
-	const message = req.body.message;
-	const sender = req.userId;
-	const reciever = req.body.recieverId;
+// exports.sendMessage = (req,res,next)=>{
+// 	const message = req.body.message;
+// 	const sender = req.userId;
+// 	const reciever = req.body.recieverId;
 
-	const newMessage = new Messages({sender:sender,reciever:reciever,text:message,channelId:'fsociety'});
-	newMessage.save().then(result=>{
-		// io.getIO().emit("send-message",{action:"message sent",message:result});
-		res.status(201).json({statusMessage:'Message sent successfully'})
-	}).catch(err=>{
-		console.log(err);
-	});
+// 	const newMessage = new Messages({sender:sender,reciever:reciever,text:message,channelId:'fsociety'});
+// 	newMessage.save().then(result=>{
+// 		// io.getIO().emit("send-message",{action:"message sent",message:result});
+// 		res.status(201).json({statusMessage:'Message sent successfully'})
+// 	}).catch(err=>{
+// 		console.log(err);
+// 	});
 
+// };
+
+exports.sendMessage = (from,to,message,sentAt)=>{
+	const newMessage = new Messages({sender:from,reciever:to,text:message,channelId:'fsociety',sentAt:sentAt});
+	return newMessage.save();
 };
-
 
 exports.getFriends = (req,res,next)=>{
 	let friends = [];
@@ -55,6 +59,25 @@ exports.getRooms = (req,res,next)=>{
 	}).catch(err=>{
 		console.log(err);
 	});
+};
+
+exports.getRoomMessages = (req,res,next)=>{
+	const roomId = req.body.roomId;
+	Room.findById(roomId).populate('messages').then(result=>{
+		res.status(200).json({messages:result.messages});
+	}).catch(err=>{
+		console.log(err);
+	});
+};
+exports.sendRoomMessage = (roomId,from,message,sentAt)=>{
+	Room.findById(roomId).then(room=>{
+		const newMessage = {sender:from,text:message,sentAt:sentAt};
+		room.messages.push(newMessage);
+		return room.save();
+	}).catch(err=>{
+		console.log(err);
+	});
+	
 };
 exports.getPeople = (req,res,next) => {
 	User.findById(req.userId).then(user=>{

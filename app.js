@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const chatRoutes = require('./routes/chat');
 const authRoutes = require('./routes/auth');
+const chatController = require('./controllers/chat');
 const multer = require('multer')
 const path = require('path')
 const Messages = require('./models/message'); 
@@ -12,11 +13,9 @@ const mongoose = require('mongoose');
 let SOCKETS_DATA = [];
 const fileStorage = multer.diskStorage({
 	destination:(req,file,cb)=>{
-		console.log(file)
 		cb(null,'images')
 	},
 	filename:(req,file,cb)=>{
-		console.log(file)
 		cb(null,new Date().toISOString() + '-' + file.originalname)
 	}
 })
@@ -41,16 +40,20 @@ app.use((error,req,res,next)=>{
 		const data = error.data;
 		res.status(status).json({message:message,data:data})
 });
+
+// MongoDB connection 
 mongoose.connect(MongoURI).
 then(result => {
     console.log('Connected!');
-	
 	const server = app.listen(3000);
 	const io = require('./socket').init(server);
+	// Sockets Connection
     io.on('connection',socket=>{
+		// Validate if user logged in
 		if(socket.handshake.auth.userId){
 			SOCKETS_DATA.push({socketId:socket.id,userId:socket.handshake.auth.userId});
 		}
+		// User Joins Room
 		socket.on('joinRoom',({roomId,roomName,userId})=>{
 			socket.join(roomId);
 			Room.findById(roomId).then(result=>{
@@ -61,15 +64,20 @@ then(result => {
 			}).catch(err=>{
 				console.log(err);
 			});
-			
-
 		});
-//   socket.emit("users", users);
+
+		// User Sends A Message Into A Room
+		socket.on('room message',({message,roomId,from,sentAt})=>{
+			chatController.sendRoomMessage(roomId,from,message,sentAt);
+			io.to(roomId).emit('room message',{message,roomId,from,sentAt});
+		});
+
+		// User Sends A Privage Message To Another User
 		socket.on("private message", ({ message, to,from,sentAt }) => {
-		const newMessage = new Messages({sender:from,reciever:to,text:message,channelId:'fsociety',sentAt:sentAt});
-		newMessage.save().then(result=>{
+		//const newMessage = new Messages({sender:from,reciever:to,text:message,channelId:'fsociety',sentAt:sentAt});
+		const newMessage = chatController.sendMessage(from,to,message,sentAt);
+		newMessage.then(result=>{
 		const indx = SOCKETS_DATA.findIndex(s=>s.userId === to);
-			
 			if(indx!=-1){
 				io.to(SOCKETS_DATA[indx].socketId).emit("private message", {
 					message:result.text,
@@ -81,6 +89,8 @@ then(result => {
 		console.log(err);
 	});			
 		  });
+
+		  // User Disconnect From The Channel
 		  socket.on("disconnect",()=>{
 			SOCKETS_DATA = SOCKETS_DATA.filter(s=>s.socketId!==socket.id);
 		  });
