@@ -14,8 +14,8 @@ const userSchema = new Schema({
 		required:true
 	},
 	status:{
-		type:String,
-		default:'i am new'
+		type:Boolean,
+		default:false
 	},
 	friends:[
 		{

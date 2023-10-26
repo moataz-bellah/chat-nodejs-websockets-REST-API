@@ -42,7 +42,12 @@ exports.login = (req,res,next)=>{
 				// }).catch(err=>{
 				// 	console.log(err);
 				// });
-				res.status(200).json({message:'User logged in successfully',token:token,userId:user._id.toString()});
+				user.status = true;
+				user.save().then(result=>{
+					res.status(200).json({message:'User logged in successfully',token:token,userId:user._id.toString()});
+				}).catch(err=>{
+					console.log(err);
+				});
 			}
 			else{
 				const error = new Error('Password not correct!!!');
@@ -56,4 +61,16 @@ exports.login = (req,res,next)=>{
 		}
 		next(err);
 	})
+};
+
+exports.logout = (req,res,next)=>{
+	const userId = req.body.userId;
+	User.findById(userId).then(user=>{
+		user.status = false;
+		return user.save();
+	}).then(result=>{
+		res.status(201).json({message:'User logged out'});
+	}).catch(err=>{
+		console.log(err);
+	});
 };

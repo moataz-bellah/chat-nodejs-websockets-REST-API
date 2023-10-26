@@ -52,7 +52,9 @@ then(result => {
 		// Validate if user logged in
 		if(socket.handshake.auth.userId){
 			SOCKETS_DATA.push({socketId:socket.id,userId:socket.handshake.auth.userId});
+			
 		}
+		const indx = SOCKETS_DATA.findIndex(s=>s.userId === socket.handshake.auth.userId);
 		// User Joins Room
 		socket.on('joinRoom',({roomId,roomName,userId})=>{
 			socket.join(roomId);
@@ -77,7 +79,7 @@ then(result => {
 		//const newMessage = new Messages({sender:from,reciever:to,text:message,channelId:'fsociety',sentAt:sentAt});
 		const newMessage = chatController.sendMessage(from,to,message,sentAt);
 		newMessage.then(result=>{
-		const indx = SOCKETS_DATA.findIndex(s=>s.userId === to);
+		
 			if(indx!=-1){
 				io.to(SOCKETS_DATA[indx].socketId).emit("private message", {
 					message:result.text,
