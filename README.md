@@ -1,8 +1,8 @@
 # realtime-chat-nodejs-websockets-REST-API
 Realtime chat app built in Vue3, Nodejs Express JS with websockets. I built the front end on MR. ROBOT show theme.
 
-# Backend Repo
-https://github.com/moataz-bellah/chat-nodejs-websockets-REST-API.
+# Frontend Repo
+https://github.com/moataz-bellah/realtime-chat-app-vuejs-websockets-REST-API
 # Features
   - Users can send messages to each other privately
   - Room Chat
